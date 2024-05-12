@@ -1,8 +1,19 @@
+from functools import wraps
+from threading import Semaphore
 from deepface import DeepFace
-
 # pylint: disable=broad-except
 
 
+semaphore = Semaphore(3)
+
+def limit_requests(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        with semaphore:
+            return f(*args, **kwargs)
+    return decorated_function
+
+@limit_requests
 def represent(img_path, model_name, detector_backend, enforce_detection, align):
     try:
         result = {}
@@ -18,7 +29,7 @@ def represent(img_path, model_name, detector_backend, enforce_detection, align):
     except Exception as err:
         return {"error": f"Exception while representing: {str(err)}"}, 400
 
-
+@limit_requests
 def verify(
     img1_path, img2_path, model_name, detector_backend, distance_metric, enforce_detection, align
 ):
@@ -36,7 +47,7 @@ def verify(
     except Exception as err:
         return {"error": f"Exception while verifying: {str(err)}"}, 400
 
-
+@limit_requests
 def analyze(img_path, actions, detector_backend, enforce_detection, align):
     try:
         result = {}
