@@ -4,6 +4,7 @@ from deepface import DeepFace
 
 import threading
 
+# https://stackoverflow.com/questions/69366850/counting-semaphore-that-supports-multiple-acquires-in-an-atomic-call-how-would
 class Mlemaphore:
     """Like a Semaphore, but with atomic acquire(count). This version is thread-safe.
 
