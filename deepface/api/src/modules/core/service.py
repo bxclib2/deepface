@@ -1,19 +1,52 @@
 from functools import wraps
-from threading import Semaphore
 from deepface import DeepFace
 # pylint: disable=broad-except
 
+import threading
 
-semaphore = Semaphore(3)
+class Mlemaphore:
+    """Like a Semaphore, but with atomic acquire(count). This version is thread-safe.
 
-def limit_requests(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        with semaphore:
-            return f(*args, **kwargs)
-    return decorated_function
+    Has a silly name until someone tells me what these are supposed to be called."""
 
-@limit_requests
+    def __init__(self, value: int = 1):
+        if value < 0:
+            raise ValueError("Mlemaphore initial value must be >= 0")
+        self._counter = value
+        self._condition = threading.Condition()
+
+    def acquire(self, count: int = 1) -> None:
+        """Acquire count permits atomically, or wait until they are available."""
+        with self._condition:
+            while self._counter < count:
+                self._condition.wait()
+            self._counter -= count
+
+    def locked(self, count: int = 1) -> bool:
+        """Return True if acquire(count) would not return immediately."""
+        return self._counter < count
+
+    def release(self, count: int = 1) -> None:
+        """Release count permits."""
+        with self._condition:
+            self._counter += count
+            self._condition.notify_all()
+
+global_mlemaphore = Mlemaphore(2)
+
+def limit_requests(acquire_count=1):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            global_mlemaphore.acquire(acquire_count)
+            try:
+                return f(*args, **kwargs)
+            finally:
+                global_mlemaphore.release(acquire_count)
+        return decorated_function
+    return decorator
+
+@limit_requests(1)
 def represent(img_path, model_name, detector_backend, enforce_detection, align):
     try:
         result = {}
@@ -29,7 +62,7 @@ def represent(img_path, model_name, detector_backend, enforce_detection, align):
     except Exception as err:
         return {"error": f"Exception while representing: {str(err)}"}, 400
 
-@limit_requests
+@limit_requests(1)
 def verify(
     img1_path, img2_path, model_name, detector_backend, distance_metric, enforce_detection, align
 ):
@@ -47,7 +80,7 @@ def verify(
     except Exception as err:
         return {"error": f"Exception while verifying: {str(err)}"}, 400
 
-@limit_requests
+@limit_requests(2)
 def analyze(img_path, actions, detector_backend, enforce_detection, align):
     try:
         result = {}
