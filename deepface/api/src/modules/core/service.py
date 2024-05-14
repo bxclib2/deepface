@@ -33,7 +33,7 @@ class Mlemaphore:
             self._counter += count
             self._condition.notify_all()
 
-global_mlemaphore = Mlemaphore(2)
+global_mlemaphore = Mlemaphore(4)
 
 def limit_requests(acquire_count=1):
     def decorator(f):
