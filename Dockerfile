@@ -45,6 +45,19 @@ RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted
 # RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org dlib==19.20.0
 # RUN pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org lightgbm==2.3.1
 
+RUN mkdir -p /root/.deepface/weights && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/age_model_weights.h5 -O /root/.deepface/weights/age_model_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/arcface_weights.h5 -O /root/.deepface/weights/arcface_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/deepid_keras_weights.h5 -O /root/.deepface/weights/deepid_keras_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/facenet512_weights.h5 -O /root/.deepface/weights/facenet512_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/facenet_weights.h5 -O /root/.deepface/weights/facenet_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/facial_expression_model_weights.h5 -O /root/.deepface/weights/facial_expression_model_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/gender_model_weights.h5 -O /root/.deepface/weights/gender_model_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/openface_weights.h5 -O /root/.deepface/weights/openface_weights.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/race_model_single_batch.h5 -O /root/.deepface/weights/race_model_single_batch.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/retinaface.h5 -O /root/.deepface/weights/retinaface.h5 && \
+    wget https://github.com/serengil/deepface_models/releases/download/v1.0/vgg_face_weights.h5 -O /root/.deepface/weights/vgg_face_weights.h5
+
 # -----------------------------------
 # environment variables
 ENV PYTHONUNBUFFERED=1
@@ -52,5 +65,4 @@ ENV PYTHONUNBUFFERED=1
 # -----------------------------------
 # run the app (re-configure port if necessary)
 WORKDIR /app/deepface/api/src
-EXPOSE 5000
-CMD ["gunicorn", "--workers=1", "--timeout=3600", "--bind=0.0.0.0:5000", "app:create_app()"]
+CMD gunicorn --workers=1 --timeout=3600 --bind=0.0.0.0:$PORT "app:create_app()"
